@@ -1,4 +1,3 @@
-```markdown
 # Resume Builder
 
 [![License](https://img.shields.io/github/license/yasinULLAH/resume-builder)](LICENSE)
@@ -37,7 +36,7 @@ A **Dynamic Resume Builder** that empowers users to create, customize, and expor
 
    ```bash
    git clone https://github.com/yasinULLAH/resume-builder.git
-   ```
+
 
 2. **Navigate to the Project Directory:**
 
