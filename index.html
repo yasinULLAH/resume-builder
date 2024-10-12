@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Resume and Portfolio Builder</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Lora&family=Montserrat&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Basic Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Toggle Button for Sidebar */
+        .toggle-sidebar {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 1.5em;
+            color: white;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .toggle-sidebar:focus {
+            outline: none;
+        }
+
+        .container {
+            display: flex;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-right: 20px;
+            border-radius: 5px;
+            min-width: 250px;
+            position: fixed;
+            top: 60px; /* Height of header */
+            left: -270px; /* Hidden by default */
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            transition: left 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar.active {
+            left: 20px;
+        }
+
+        .sidebar .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar .button-group button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar .button-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .sidebar .button-group button i {
+            margin-right: 8px;
+        }
+
+        /* Tooltip Styles */
+        .sidebar .button-group button .tooltip {
+            visibility: hidden;
+            width: max-content;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            left: 110%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+
+        .sidebar .button-group button:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Main Content */
+        .main-content {
+            width: 100%;
+            min-width: 300px;
+            margin-top: 20px;
+        }
+
+        #resume {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            margin-left: 0; /* Adjusted for sidebar */
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.active + .main-content #resume {
+            margin-left: 270px; /* Sidebar width + gap */
+        }
+
+        /* Layout Styles */
+
+        /* Layout 1: Classic */
+        .layout1 {
+            border-left: 4px solid #007BFF;
+            padding-left: 20px;
+        }
+
+        .layout1 h1 {
+            font-family: 'Montserrat', sans-serif;
+            color: #007BFF;
+            border-bottom: 2px solid #007BFF;
+            padding-bottom: 5px;
+        }
+
+        .layout1 h2 {
+            color: #0056b3;
+            margin-top: 20px;
+        }
+
+        .layout1 ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+
+        /* Layout 2: Modern */
+        .layout2 {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layout2 .header-section {
+            background-color: #28a745;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .layout2 h1 {
+            font-family: 'Lora', serif;
+            margin: 0;
+        }
+
+        .layout2 h2 {
+            color: #28a745;
+            margin-top: 15px;
+            border-bottom: 1px solid #28a745;
+            display: inline-block;
+        }
+
+        .layout2 ul {
+            list-style-type: square;
+            margin-left: 20px;
+        }
+
+        /* Layout 3: Minimalist */
+        .layout3 {
+            font-family: 'Montserrat', sans-serif;
+            color: #2c3e50;
+        }
+
+        .layout3 h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .layout3 h2 {
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 20px;
+        }
+
+        .layout3 ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .layout3 ul li::before {
+            content: "•";
+            color: #2c3e50;
+            display: inline-block; 
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        /* Editable Styles */
+        [contenteditable="true"]:focus {
+            outline: 2px dashed #007BFF;
+            background-color: #e6f7ff;
+        }
+
+        /* Export Buttons */
+        .export-btn {
+            background-color: #17a2b8;
+        }
+
+        .export-btn:hover {
+            background-color: #117a8b;
+        }
+
+        .export-docx {
+            background-color: #6f42c1;
+        }
+
+        .export-docx:hover {
+            background-color: #5a32a3;
+        }
+
+        /* Add Section Button */
+        .add-section-btn {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .add-section-btn:hover {
+            background-color: #e0a800;
+        }
+
+        /* Remove Section Button */
+        .remove-section-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .remove-section-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Add Item, Table, Image Buttons */
+        .section-controls {
+            margin-top: 10px;
+        }
+
+        .section-controls button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            background-color: #6c757d;
+            color: white;
+            font-size: 0.8em;
+            transition: background-color 0.3s ease;
+        }
+
+        .section-controls button:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .sidebar + .main-content #resume {
+                margin-left: 270px;
+            }
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Image Styles */
+        .resume-image {
+            max-width: 150px;
+            border-radius: 50%;
+            margin-top: 10px;
+        }
+
+        /* Remove Item Button */
+        .remove-item-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 2px 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 0.7em;
+            margin-left: 10px;
+        }
+
+        .remove-item-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Add and Remove Icons */
+        .add-item-btn, .remove-item-btn {
+            font-weight: bold;
+            font-size: 1em;
+            line-height: 1em;
+            padding: 0 5px;
+            margin-left: 5px;
+            background-color: transparent;
+            color: #007BFF;
+            cursor: pointer;
+        }
+
+        .add-item-btn:hover, .remove-item-btn:hover {
+            color: #0056b3;
+        }
+
+        /* Hide action buttons during export */
+        .no-export {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="toggle-sidebar" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1>Dynamic Resume and Portfolio Builder</h1>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar for Controls -->
+        <div class="sidebar" id="sidebar">
+            <div class="button-group">
+                <button onclick="changeLayout('layout1')">
+                    <i class="fas fa-th-list"></i>
+                    <span class="tooltip">Classic</span>
+                </button>
+                <button onclick="changeLayout('layout2')">
+                    <i class="fas fa-project-diagram"></i>
+                    <span class="tooltip">Modern</span>
+                </button>
+                <button onclick="changeLayout('layout3')">
+                    <i class="fas fa-minus-circle"></i>
+                    <span class="tooltip">Minimalist</span>
+                </button>
+                <button onclick="exportPDF()">
+                    <i class="fas fa-file-pdf"></i>
+                    <span class="tooltip">Export to PDF</span>
+                </button>
+                <button onclick="exportDOCX()">
+                    <i class="fas fa-file-word"></i>
+                    <span class="tooltip">Export to DOCX</span>
+                </button>
+                <button onclick="addSection()">
+                    <i class="fas fa-plus-circle"></i>
+                    <span class="tooltip">Add Section</span>
+                </button>
+                <button onclick="clearLocalStorage()">
+                    <i class="fas fa-trash-alt"></i>
+                    <span class="tooltip">Clear Data</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content for Resume -->
+        <div class="main-content">
+            <div id="resume" class="layout1">
+                <div class="section">
+                    <div class="section-header">
+                        <h1 contenteditable="true">Your Name</h1>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <p contenteditable="true">[Your Professional Title]</p>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Contact Information</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">Email: your.email@example.com <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                        <li contenteditable="true">Phone: (123) 456-7890 <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                        <li contenteditable="true">LinkedIn: linkedin.com/in/yourprofile <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                        <li contenteditable="true">Website: yourwebsite.com <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Summary</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <p contenteditable="true">
+                        A brief summary about your professional background, skills, and what you bring to the table.
+                    </p>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Work Experience</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">
+                            <strong>Job Title</strong> at <em>Company Name</em> (Start Date - End Date)
+                            <p>Describe your responsibilities and achievements.</p>
+                            <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span>
+                        </li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Education</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">
+                            <strong>Degree</strong> in <em>Field of Study</em> from <em>University Name</em> (Graduation Year)
+                            <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span>
+                        </li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Skills</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">Skill 1 <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                        <li contenteditable="true">Skill 2 <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                        <li contenteditable="true">Skill 3 <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Projects</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">
+                            <strong>Project Name</strong>: Describe the project and your role in it.
+                            <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span>
+                        </li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Certifications</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">Certification Name - Issuing Organization (Year) <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 contenteditable="true">Languages</h2>
+                        <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                    </div>
+                    <ul>
+                        <li contenteditable="true">Language 1 - Proficiency Level <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                        <li contenteditable="true">Language 2 - Proficiency Level <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                    </ul>
+                    <div class="section-controls no-export">
+                        <button onclick="addListItem(this)">Add Item</button>
+                        <button onclick="addTable(this)">Add Table</button>
+                        <button onclick="addImage(this)">Add Image</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Load saved data from localStorage
+        window.onload = function() {
+            const resume = document.getElementById('resume');
+            const savedData = localStorage.getItem('resumeData');
+            const savedLayout = localStorage.getItem('resumeLayout');
+            if (savedData) {
+                resume.innerHTML = savedData;
+            }
+            if (savedLayout) {
+                resume.className = savedLayout;
+            }
+        }
+
+        // Save data to localStorage on change
+        document.getElementById('resume').addEventListener('input', function() {
+            localStorage.setItem('resumeData', this.innerHTML);
+        });
+
+        // Save layout to localStorage
+        function changeLayout(layoutClass) {
+            const resume = document.getElementById('resume');
+            resume.className = layoutClass;
+            localStorage.setItem('resumeLayout', layoutClass);
+        }
+
+        // Export resume to PDF without action buttons
+        function exportPDF() {
+            const resume = document.getElementById('resume');
+            const clone = resume.cloneNode(true);
+            // Remove elements with class 'no-export' from the clone
+            const noExportElements = clone.querySelectorAll('.no-export');
+            noExportElements.forEach(el => el.remove());
+
+            // Create a temporary container for the clone
+            const tempContainer = document.createElement('div');
+            tempContainer.style.paddingTop = '0'; // Adjust padding if necessary
+            tempContainer.appendChild(clone);
+
+            const opt = {
+                margin:       [0.3, 0.5, 0.3, 0.5], // [top, left, bottom, right]
+                filename:     'My_Resume.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, logging: false, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(tempContainer).save();
+        }
+
+        // Export resume to DOCX
+        function exportDOCX() {
+            const resume = document.getElementById('resume').innerHTML;
+            const blob = new Blob(['\ufeff', `<html><body>${resume}</body></html>`], {
+                type: 'application/msword'
+            });
+            const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(resume);
+            const downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = 'My_Resume.doc';
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Add new section
+        function addSection() {
+            const resume = document.getElementById('resume');
+            const newSection = document.createElement('div');
+            newSection.className = 'section';
+            newSection.innerHTML = `
+                <div class="section-header">
+                    <h2 contenteditable="true">New Section</h2>
+                    <button class="remove-section-btn no-export" onclick="removeSection(this)">Remove</button>
+                </div>
+                <ul>
+                    <li contenteditable="true">Detail 1 <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                    <li contenteditable="true">Detail 2 <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span></li>
+                </ul>
+                <div class="section-controls no-export">
+                    <button onclick="addListItem(this)">Add Item</button>
+                    <button onclick="addTable(this)">Add Table</button>
+                    <button onclick="addImage(this)">Add Image</button>
+                </div>
+            `;
+            resume.appendChild(newSection);
+            localStorage.setItem('resumeData', resume.innerHTML);
+        }
+
+        // Remove section
+        function removeSection(button) {
+            const section = button.parentElement.parentElement;
+            section.remove();
+            localStorage.setItem('resumeData', document.getElementById('resume').innerHTML);
+        }
+
+        // Add list item
+        function addListItem(button) {
+            const section = button.closest('.section');
+            const ul = section.querySelector('ul');
+            if (ul) {
+                const newItem = document.createElement('li');
+                newItem.setAttribute('contenteditable', 'true');
+                newItem.innerHTML = `New Item <span class="add-item-btn no-export" onclick="addListItem(this)">+</span><span class="remove-item-btn no-export" onclick="removeListItem(this)">-</span>`;
+                ul.appendChild(newItem);
+                localStorage.setItem('resumeData', document.getElementById('resume').innerHTML);
+            }
+        }
+
+        // Remove list item
+        function removeListItem(button) {
+            const li = button.parentElement;
+            li.remove();
+            localStorage.setItem('resumeData', document.getElementById('resume').innerHTML);
+        }
+
+        // Add table
+        function addTable(button) {
+            const section = button.closest('.section');
+            const existingTable = section.querySelector('table');
+            if (!existingTable) {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <tr>
+                        <th>Header 1</th>
+                        <th>Header 2</th>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Data 1</td>
+                        <td contenteditable="true">Data 2</td>
+                    </tr>
+                `;
+                section.appendChild(table);
+                localStorage.setItem('resumeData', document.getElementById('resume').innerHTML);
+            } else {
+                alert('Table already exists in this section.');
+            }
+        }
+
+        // Add image
+        function addImage(button) {
+            const section = button.closest('.section');
+            const existingImage = section.querySelector('img');
+            if (!existingImage) {
+                const imageUrl = prompt('Enter image URL:');
+                if (imageUrl) {
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = 'Resume Image';
+                    img.className = 'resume-image';
+                    img.setAttribute('contenteditable', 'false');
+                    section.appendChild(img);
+                    localStorage.setItem('resumeData', document.getElementById('resume').innerHTML);
+                }
+            } else {
+                alert('Image already exists in this section.');
+            }
+        }
+
+        // Clear localStorage with confirmation
+        function clearLocalStorage() {
+            if (confirm('Are you sure you want to clear all your data? This action cannot be undone.')) {
+                localStorage.removeItem('resumeData');
+                localStorage.removeItem('resumeLayout');
+                location.reload();
+            }
+        }
+    </script>
+
+</body>
+</html>
